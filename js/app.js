@@ -10,6 +10,7 @@ class CalorieTracker {
     this._displayCaloriesConsumed()
     this._displayCaloriesBurned()
     this._displayCaloriesRemaining()
+    this._displayCaloriesProgress()
   }
 
   addMeal(meal) {
@@ -48,8 +49,27 @@ class CalorieTracker {
 
   _displayCaloriesRemaining() {
     const caloriesRemainingEl = document.getElementById('calories-remaining')
-    const remaining = this._calorieLimit + this._totalCalories
+    const progressEl = document.getElementById('calorie-progress')
+    const remaining = this._calorieLimit - this._totalCalories
     caloriesRemainingEl.innerHTML = remaining
+    if (remaining <= 0) {
+      caloriesRemainingEl.parentElement.parentElement.classList.remove('bg-light')
+      caloriesRemainingEl.parentElement.parentElement.classList.add('bg-danger')
+      progressEl.classList.remove('bg-success')
+      progressEl.classList.add('bg-danger')
+    } else {
+      caloriesRemainingEl.parentElement.parentElement.classList.remove('bg-danger')
+      caloriesRemainingEl.parentElement.parentElement.classList.add('bg-light')
+      progressEl.classList.remove('bg-danger')
+      progressEl.classList.add('bg-success')      
+    }
+  }
+
+  _displayCaloriesProgress() {
+    const progressEl = document.getElementById('calorie-progress')
+    const percentage = (this._totalCalories / this._calorieLimit) * 100
+    const width = Math.min(percentage, 100)
+    progressEl.style.width = `${width}%`
   }
 
   _render() {
@@ -57,6 +77,7 @@ class CalorieTracker {
     this._displayCaloriesConsumed()
     this._displayCaloriesBurned()
     this._displayCaloriesRemaining()
+    this._displayCaloriesProgress()
   }
 }
 
@@ -76,12 +97,42 @@ class Workout {
   }
 }
 
-const tracker = new CalorieTracker()
+class App {
+  constructor() {
+    this._tracker = new CalorieTracker()
+    document.getElementById('meal-form').addEventListener('submit', this._newItem.bind(this, 'meal'))
+    document.getElementById('workout-form').addEventListener('submit', this._newItem.bind(this, 'workout'))
+  }
 
-const breakfast = new Meal('Breakfast', 400)
-tracker.addMeal(breakfast)
+  _newItem(type, e) {
+    e.preventDefault()
+    const name = document.getElementById(`${type}-name`)
+    const calories = document.getElementById(`${type}-calories`)
+    if (name.value === '' || calories.value === '') {
+      alert('Please fill in all fields')
+      return
+    }
+    if (type === 'meal') {
+      const meal = new Meal(name.value, +calories.value)
+      this._tracker.addMeal(meal)
+    } else {
+      const workout = new Workout(name.value, +calories.value)
+      this._tracker.addWorkout(workout)
+    }
+    name.value = ''
+    name.calories = ''
+    const collapseItem = document.getElementById(`collapse-${type}`)
+    const bsCollapse = new bootstrap.Collapse(collapseItem, { toggle: true })
+  }
+}
 
-const run = new Workout('Morning Run', 350)
-tracker.addWorkout(run)
+const app = new App()
+// const tracker = new CalorieTracker()
 
-console.log(tracker._meals, tracker._workouts, tracker._totalCalories)
+// const breakfast = new Meal('Breakfast', 2400)
+// tracker.addMeal(breakfast)
+
+// const run = new Workout('Morning Run', 350)
+// tracker.addWorkout(run)
+
+// console.log(tracker._meals, tracker._workouts, tracker._totalCalories)
